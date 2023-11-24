@@ -204,7 +204,7 @@ impl BfvParameters {
         params
     }
 
-    #[cfg(test)]
+    // #[cfg(test)]
     pub fn default_arc(num_moduli: usize, degree: usize) -> Arc<Self> {
         if !degree.is_power_of_two() || degree < 8 {
             panic!("Invalid degree");

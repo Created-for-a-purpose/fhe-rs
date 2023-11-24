@@ -7,7 +7,7 @@ use fhe_math::{
     rq::{traits::TryConvertFrom, Poly, Representation},
     zq::Modulus,
 };
-use fhe_traits::{FheDecrypter, FheEncrypter, FheParametrized, Serialize};
+use fhe_traits::{FheDecrypter, FheEncrypter, FheParametrized, Serialize, DeserializeParametrized};
 use fhe_util::sample_vec_cbd;
 use itertools::Itertools;
 use num_bigint::BigUint;
@@ -217,7 +217,6 @@ impl FheDecrypter<Plaintext, Ciphertext> for SecretKey {
     }
 }
 
- // fuck me
 impl From<&SecretKey> for SecretKeyProto {
     fn from(sk: &SecretKey) -> Self {
         let coeffs: Vec<i64> = sk.coeffs.iter().cloned().collect();
@@ -231,7 +230,22 @@ impl Serialize for SecretKey {
         SecretKeyProto::from(self).encode_to_vec()
     }
 }
-// till here
+
+impl DeserializeParametrized for SecretKey {
+    type Error = Error;
+
+    fn from_bytes(bytes: &[u8], par: &Arc<BfvParameters>) -> Result<Self> {
+        let proto: SecretKeyProto =
+            Message::decode(bytes).map_err(|_| Error::SerializationError)?;
+
+        let secret_key = SecretKey {
+            par: par.clone(),
+            coeffs: proto.coeffs.into(),
+        };
+
+        Ok(secret_key)
+    }
+}
 
 #[cfg(test)]
 mod tests {
