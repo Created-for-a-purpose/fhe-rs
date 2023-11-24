@@ -2,11 +2,12 @@
 
 use crate::bfv::{BfvParameters, Ciphertext, Plaintext};
 use crate::{Error, Result};
+use crate::proto::bfv::{SecretKey as SecretKeyProto};
 use fhe_math::{
     rq::{traits::TryConvertFrom, Poly, Representation},
     zq::Modulus,
 };
-use fhe_traits::{FheDecrypter, FheEncrypter, FheParametrized};
+use fhe_traits::{FheDecrypter, FheEncrypter, FheParametrized, Serialize};
 use fhe_util::sample_vec_cbd;
 use itertools::Itertools;
 use num_bigint::BigUint;
@@ -14,6 +15,7 @@ use rand::{thread_rng, CryptoRng, Rng, RngCore, SeedableRng};
 use rand_chacha::ChaCha8Rng;
 use std::sync::Arc;
 use zeroize::{Zeroize, ZeroizeOnDrop, Zeroizing};
+use prost::Message;
 
 /// Secret key for the BFV encryption scheme.
 #[derive(Debug, PartialEq, Eq, Clone)]
@@ -214,6 +216,22 @@ impl FheDecrypter<Plaintext, Ciphertext> for SecretKey {
         }
     }
 }
+
+ // fuck me
+impl From<&SecretKey> for SecretKeyProto {
+    fn from(sk: &SecretKey) -> Self {
+        let coeffs: Vec<i64> = sk.coeffs.iter().cloned().collect();
+
+        SecretKeyProto { coeffs }
+    }
+}
+
+impl Serialize for SecretKey {
+    fn to_bytes(&self) -> Vec<u8> {
+        SecretKeyProto::from(self).encode_to_vec()
+    }
+}
+// till here
 
 #[cfg(test)]
 mod tests {
